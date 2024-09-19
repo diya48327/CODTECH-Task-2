@@ -1,0 +1,81 @@
+import socket
+import requests
+from requests.exceptions import RequestException
+from concurrent.futures import ThreadPoolExecutor
+
+# List of common ports to check
+COMMON_PORTS = {
+    21: "FTP",
+    22: "SSH",
+    23: "Telnet",
+    25: "SMTP",
+    80: "HTTP",
+    443: "HTTPS",
+    3306: "MySQL",
+    3389: "RDP",
+}
+
+# Scan open ports for a given host
+def scan_ports(host, port_range=COMMON_PORTS):
+    open_ports = []
+    for port, service in port_range.items():
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(1)
+            result = sock.connect_ex((host, port))
+            if result == 0:
+                open_ports.append((port, service))
+            sock.close()
+        except socket.error:
+            pass
+    return open_ports
+
+# Check for outdated software by examining server HTTP headers
+def check_software_version(url):
+    try:
+        response = requests.get(url)
+        server_header = response.headers.get('Server')
+        if server_header:
+            print(f"Server header detected: {server_header}")
+            # You can implement logic here to compare versions for known outdated software
+        else:
+            print("No server version found in HTTP headers.")
+    except RequestException as e:
+        print(f"Error accessing {url}: {e}")
+
+# Check for directory listing vulnerability
+def check_directory_listing(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200 and "Index of /" in response.text:
+            print(f"Directory listing enabled at: {url}")
+        else:
+            print(f"Directory listing seems disabled at: {url}")
+    except RequestException as e:
+        print(f"Error accessing {url}: {e}")
+
+# Main vulnerability scan function
+def vulnerability_scan(target):
+    print(f"Scanning target: {target}")
+
+    # Check open ports
+    print("\nChecking for open ports...")
+    open_ports = scan_ports(target)
+    if open_ports:
+        for port, service in open_ports:
+            print(f"\n---Port {port} ({service}) is open---\n")
+    else:
+        print("\n=====No common ports are open====\n")
+
+    # Check software version
+    print("\nChecking server version...")
+    check_software_version(f"http://{target}")
+
+    # Check for directory listing vulnerability
+    print("\nChecking for directory listing...")
+    check_directory_listing(f"http://{target}")
+
+# Example usage
+if __name__ == "__main__":
+    target = input("Enter target website or IP: ")
+    vulnerability_scan(target)
