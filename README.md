@@ -3,7 +3,7 @@ Company:CODTECT IT SOLUTIONS
 ID:CT12DS1931
 Domain:Cyber Security & Ethical Hacking
 Duration:July to September 2024
-Mentor:
+Mentor:Muzammil Ahmed
 
 
 Project Documentation: Simple Vulnerability Scanner
